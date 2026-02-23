@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>काव्य संगम v2 – Kavya Sangam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --ink: #1a0a00; --paper: #fdf6ec; --parchment: #f5e9d3;
+      --saffron: #e8730a; --saffron-light: #f9a855; --rust: #8b2500;
+      --muted: #7a5c3a; --card-bg: #fffcf6; --border: #d9c4a0;
+      --modal-bg: #fdf6ec; --shadow: rgba(139,37,0,0.12);
+      --success: #2d7a3a; --translate-bg: #fff8f0;
+    }
+    body.dark {
+      --ink: #f0e0c8; --paper: #12080a; --parchment: #1e1008;
+      --saffron: #f9a855; --saffron-light: #ffc47a; --rust: #e8730a;
+      --muted: #b08060; --card-bg: #1a0e08; --border: #3a2010;
+      --modal-bg: #1a0e08; --shadow: rgba(0,0,0,0.4);
+      --translate-bg: #1e1208;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      background:var(--paper);color:var(--ink);
+      font-family:'Lato',sans-serif;min-height:100vh;
+      transition:background .3s,color .3s;
+      background-image:
+        radial-gradient(ellipse at 20% 0%,rgba(232,115,10,0.07) 0%,transparent 50%),
+        radial-gradient(ellipse at 80% 100%,rgba(139,37,0,0.05) 0%,transparent 50%);
+    }
+
+    /* ── HEADER ── */
+    header{
+      background:var(--ink);color:var(--paper);
+      padding:0 1.5rem;display:flex;align-items:center;
+      justify-content:space-between;height:66px;
+      position:sticky;top:0;z-index:300;
+      box-shadow:0 2px 20px rgba(0,0,0,0.5);
+    }
+    .logo{display:flex;flex-direction:column;line-height:1}
+    .logo-main{font-family:'Noto Serif Devanagari',serif;font-size:1.3rem;font-weight:700;color:var(--saffron-light);letter-spacing:1px}
+    .logo-sub{font-family:'Playfair Display',serif;font-size:0.68rem;color:#c8a878;letter-spacing:3px;text-transform:uppercase}
+    .header-right{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap}
+    .nav-btn{
+      background:none;border:1px solid transparent;color:#c8a878;
+      padding:0.38rem 0.85rem;border-radius:4px;cursor:pointer;
+      font-family:'Lato',sans-serif;font-size:0.85rem;transition:all .2s;white-space:nowrap;
+    }
+    .nav-btn:hover,.nav-btn.active{color:var(--saffron-light);border-color:var(--saffron);background:rgba(232,115,10,0.1)}
+    .icon-btn{background:none;border:none;color:#c8a878;font-size:1.2rem;cursor:pointer;padding:0.3rem;border-radius:4px;transition:color .2s}
+    .icon-btn:hover{color:var(--saffron-light)}
+    .header-search{position:relative}
+    .header-search input{
+      background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+      color:#f0d8b0;border-radius:20px;padding:0.35rem 1rem 0.35rem 2rem;
+      font-size:0.82rem;font-family:'Lato',sans-serif;width:160px;
+      transition:all .3s;outline:none;
+    }
+    .header-search input:focus{width:220px;border-color:var(--saffron);background:rgba(255,255,255,0.12)}
+    .header-search input::placeholder{color:#a08060}
+    .search-icon{position:absolute;left:0.6rem;top:50%;transform:translateY(-50%);font-size:0.75rem;color:#a08060;pointer-events:none}
+
+    /* ── DB STATUS ── */
+    .db-badge{
+      display:inline-flex;align-items:center;gap:0.3rem;
+      font-size:0.68rem;padding:0.18rem 0.6rem;border-radius:12px;
+      border:1px solid var(--border);color:var(--muted);margin-top:0.5rem;
+      font-family:'Lato',sans-serif;
+    }
+    .db-dot{width:6px;height:6px;border-radius:50%;background:#aaa;flex-shrink:0}
+    .db-dot.ok{background:#2d7a3a;animation:blink 2s infinite}
+    .db-dot.err{background:#c93040}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+    /* ── HERO ── */
+    .hero{text-align:center;padding:3rem 2rem 2rem;position:relative}
+    .hero::after{content:'✦';display:block;color:var(--saffron);font-size:1rem;margin-top:1.5rem;opacity:.5}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:400;color:var(--rust);line-height:1.2;margin-bottom:.4rem}
+    .hero h1 em{font-style:italic;color:var(--saffron)}
+    .hero p{font-family:'Noto Serif Devanagari',serif;font-size:.95rem;color:var(--muted)}
+    .hero-stats{display:flex;justify-content:center;gap:2.5rem;margin-top:1.5rem}
+    .hero-stats span{text-align:center;color:var(--muted);font-size:.82rem}
+    .hero-stats strong{display:block;font-size:1.4rem;color:var(--saffron);font-family:'Playfair Display',serif}
+
+    /* ── CHALLENGE BANNER ── */
+    .challenge-banner{
+      background:linear-gradient(135deg,var(--rust),var(--saffron));
+      color:white;text-align:center;padding:.8rem 2rem;
+      font-size:.88rem;font-family:'Lato',sans-serif;
+      display:flex;align-items:center;justify-content:center;gap:1rem;
+      cursor:pointer;transition:opacity .2s;
+    }
+    .challenge-banner:hover{opacity:.9}
+    .challenge-banner strong{font-size:1rem}
+    .challenge-tag{background:rgba(255,255,255,.25);padding:.15rem .6rem;border-radius:10px;font-size:.78rem}
+
+    /* ── MOOD BAR ── */
+    .mood-bar{display:flex;gap:.5rem;padding:0 2rem 1rem;flex-wrap:wrap;max-width:1100px;margin-inline:auto;justify-content:center}
+    .mood-btn{
+      padding:.3rem 1rem;border-radius:20px;border:1px solid var(--border);
+      background:transparent;color:var(--muted);cursor:pointer;
+      font-size:.82rem;font-family:'Lato',sans-serif;transition:all .2s;
+    }
+    .mood-btn:hover,.mood-btn.active{background:var(--saffron);color:white;border-color:var(--saffron)}
+
+    /* ── FILTER BAR ── */
+    .filter-bar{display:flex;gap:.4rem;padding:0 2rem;margin-bottom:1.5rem;flex-wrap:wrap;max-width:1100px;margin-inline:auto}
+    .filter-btn{
+      padding:.32rem .9rem;border-radius:20px;border:1px solid var(--border);
+      background:transparent;color:var(--muted);cursor:pointer;
+      font-size:.82rem;font-family:'Lato',sans-serif;transition:all .2s;
+    }
+    .filter-btn:hover,.filter-btn.active{background:var(--rust);color:white;border-color:var(--rust)}
+
+    .sort-row{display:flex;align-items:center;gap:.5rem;padding:0 2rem 1rem;max-width:1100px;margin-inline:auto}
+    .sort-row label{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+    .sort-row select{background:var(--card-bg);border:1px solid var(--border);color:var(--ink);border-radius:6px;padding:.25rem .6rem;font-size:.82rem;cursor:pointer;font-family:'Lato',sans-serif}
+
+    /* ── GRID ── */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem;padding:0 2rem 3rem;max-width:1100px;margin-inline:auto}
+
+    /* ── CARD ── */
+    .card{
+      background:var(--card-bg);border:1px solid var(--border);border-radius:10px;
+      padding:1.4rem;cursor:pointer;
+      transition:transform .25s,box-shadow .25s,border-color .2s;
+      position:relative;overflow:hidden;animation:fadeUp .4s ease both;
+    }
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,var(--saffron),var(--rust));opacity:0;transition:opacity .2s}
+    .card:hover{transform:translateY(-4px);box-shadow:0 10px 32px var(--shadow)}
+    .card:hover::before{opacity:1}
+    .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem}
+    .card-badges{display:flex;gap:.3rem;flex-wrap:wrap}
+    .card-lang{font-size:.68rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--saffron)}
+    .card-type{font-size:.68rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);padding:.08rem .45rem;border-radius:3px}
+    .mood-badge{font-size:.78rem}
+    .card-play-btn{
+      background:var(--saffron);border:none;border-radius:50%;width:28px;height:28px;
+      color:white;cursor:pointer;font-size:.75rem;display:flex;align-items:center;
+      justify-content:center;transition:all .2s;flex-shrink:0;
+    }
+    .card-play-btn:hover{background:var(--rust);transform:scale(1.1)}
+    .card-play-btn.playing{background:var(--rust);animation:pulse 1s infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,115,10,.4)}50%{box-shadow:0 0 0 6px rgba(232,115,10,0)}}
+    .card h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--ink);margin-bottom:.3rem;line-height:1.3}
+    .card-author{font-size:.78rem;color:var(--muted);margin-bottom:.7rem;font-style:italic}
+    .card-excerpt{font-family:'Noto Serif Devanagari',serif;font-size:.88rem;color:var(--ink);line-height:1.7;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;opacity:.8}
+    .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:.7rem;border-top:1px solid var(--border);font-size:.76rem;color:var(--muted)}
+    .card-actions{display:flex;gap:.6rem;align-items:center}
+    .card-likes{cursor:pointer;transition:color .2s;display:flex;align-items:center;gap:.2rem}
+    .card-likes:hover{color:var(--rust)}
+    .card-likes.liked{color:var(--rust)}
+    .card-bookmark{cursor:pointer;transition:color .2s;font-size:.9rem}
+    .card-bookmark:hover,.card-bookmark.saved{color:var(--saffron)}
+    .read-time{font-size:.7rem;color:var(--muted)}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── LOADING ── */
+    .loading-wrap{text-align:center;padding:3rem;color:var(--muted);grid-column:1/-1}
+    .spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--saffron);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── MODAL ── */
+    .overlay{
+      display:none;position:fixed;inset:0;background:rgba(10,4,0,.75);z-index:400;
+      backdrop-filter:blur(4px);justify-content:center;align-items:flex-start;padding:1.5rem 1rem;overflow-y:auto;
+    }
+    .overlay.open{display:flex}
+    .modal{
+      background:var(--modal-bg);max-width:700px;width:100%;border-radius:12px;
+      padding:2rem 2.5rem;position:relative;border-top:4px solid var(--saffron);
+      margin:auto;animation:fadeUp .3s ease;box-shadow:0 20px 60px rgba(0,0,0,.3);
+    }
+    .modal-close{position:absolute;top:.9rem;right:1.2rem;font-size:1.5rem;background:none;border:none;cursor:pointer;color:var(--muted);line-height:1}
+    .modal-lang{font-size:.72rem;font-weight:700;letter-spacing:2px;color:var(--saffron);text-transform:uppercase}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--rust);margin:.25rem 0 .15rem;line-height:1.2}
+    .modal-author{font-size:.88rem;color:var(--muted);font-style:italic}
+    .modal-divider{border:none;border-top:1px solid var(--border);margin:.8rem 0}
+    .modal-toolbar{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;align-items:center}
+    .tool-btn{
+      display:flex;align-items:center;gap:.3rem;
+      background:var(--parchment);border:1px solid var(--border);
+      border-radius:6px;padding:.4rem .8rem;cursor:pointer;
+      font-size:.8rem;font-family:'Lato',sans-serif;color:var(--ink);transition:all .2s;
+    }
+    .tool-btn:hover{background:var(--saffron);color:white;border-color:var(--saffron)}
+    .tool-btn.active{background:var(--rust);color:white;border-color:var(--rust)}
+    .tool-btn.playing-btn{background:var(--rust);color:white;border-color:var(--rust)}
+    .voice-bar{display:none;align-items:center;gap:.7rem;background:var(--parchment);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;margin-bottom:.8rem}
+    .voice-bar.show{display:flex}
+    .voice-progress{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+    .voice-fill{height:100%;width:0%;background:var(--saffron);border-radius:2px;transition:width .3s}
+    .voice-status{font-size:.75rem;color:var(--muted);white-space:nowrap}
+    .font-control{display:flex;align-items:center;gap:.4rem}
+    .font-control button{background:var(--parchment);border:1px solid var(--border);width:26px;height:26px;border-radius:4px;cursor:pointer;color:var(--ink);font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .font-control button:hover{background:var(--saffron);color:white;border-color:var(--saffron)}
+    .modal-body{font-family:'Noto Serif Devanagari',serif;font-size:1.05rem;line-height:2;color:var(--ink);white-space:pre-wrap;transition:font-size .2s}
+    .translate-panel{display:none;margin-top:1.2rem;background:var(--translate-bg);border:1px solid var(--border);border-radius:8px;padding:1.2rem;border-left:3px solid var(--saffron)}
+    .translate-panel.show{display:block}
+    .translate-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap}
+    .translate-header span{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--saffron)}
+    .trans-lang-btn{padding:.2rem .7rem;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;transition:all .2s;font-family:'Lato',sans-serif}
+    .trans-lang-btn:hover,.trans-lang-btn.active{background:var(--saffron);color:white;border-color:var(--saffron)}
+    .translate-body{font-family:'Noto Serif Devanagari',serif;font-size:.95rem;line-height:1.9;color:var(--ink);opacity:.85;white-space:pre-wrap}
+    .translate-note{font-size:.72rem;color:var(--muted);margin-top:.5rem;font-style:italic}
+    .translate-loading{color:var(--muted);font-style:italic;font-size:.9rem}
+    .comments-section{margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.2rem}
+    .comments-section h4{font-family:'Playfair Display',serif;font-size:1rem;color:var(--rust);margin-bottom:.8rem}
+    .comment-input-row{display:flex;gap:.5rem;margin-bottom:1rem}
+    .comment-input{flex:1;background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:.5rem .8rem;font-size:.85rem;font-family:'Lato',sans-serif;color:var(--ink);outline:none}
+    .comment-input:focus{border-color:var(--saffron)}
+    .comment-send{background:var(--saffron);border:none;border-radius:6px;padding:.5rem 1rem;color:white;cursor:pointer;font-size:.85rem;transition:background .2s}
+    .comment-send:hover{background:var(--rust)}
+    .comment-list{display:flex;flex-direction:column;gap:.6rem}
+    .comment-item{background:var(--parchment);border-radius:6px;padding:.6rem .8rem;font-size:.85rem}
+    .comment-item strong{color:var(--saffron)}
+    .share-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+    .share-btn{padding:.35rem .8rem;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:.8rem;color:var(--ink);transition:all .2s;font-family:'Lato',sans-serif}
+    .share-btn:hover{background:var(--ink);color:var(--paper)}
+
+    /* ── UPLOAD ── */
+    .upload-section{display:none;max-width:720px;margin:0 auto 3rem;padding:0 2rem}
+    .upload-section.open{display:block}
+    .form-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:2rem;border-top:4px solid var(--saffron)}
+    .form-card h2{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:400;color:var(--rust);margin-bottom:1.4rem}
+    .form-row{margin-bottom:1.1rem}
+    label{display:block;font-size:.78rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+    input[type="text"],select,textarea{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:.65rem .9rem;font-family:'Lato',sans-serif;font-size:.92rem;color:var(--ink);transition:border-color .2s;outline:none}
+    input[type="text"]:focus,select:focus,textarea:focus{border-color:var(--saffron);box-shadow:0 0 0 3px rgba(232,115,10,.1)}
+    textarea{resize:vertical;min-height:160px;font-family:'Noto Serif Devanagari',serif;line-height:1.8}
+    .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.1rem}
+    .submit-btn{background:var(--saffron);color:white;border:none;padding:.8rem 2rem;border-radius:6px;font-size:.95rem;font-family:'Lato',sans-serif;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:background .2s,transform .1s}
+    .submit-btn:hover{background:var(--rust)}
+    .submit-btn:active{transform:scale(.98)}
+    .word-count{font-size:.75rem;color:var(--muted);text-align:right;margin-top:.25rem}
+
+    /* ── BOOKMARKS ── */
+    .bookmarks-section{display:none;max-width:1100px;margin:0 auto;padding:0 2rem 3rem}
+    .bookmarks-section.open{display:block}
+
+    /* ── CHALLENGE MODAL ── */
+    .challenge-overlay{display:none;position:fixed;inset:0;background:rgba(10,4,0,.8);z-index:500;justify-content:center;align-items:center;padding:2rem}
+    .challenge-overlay.open{display:flex}
+    .challenge-modal{background:var(--modal-bg);max-width:500px;width:100%;border-radius:12px;padding:2rem;border-top:4px solid var(--rust);animation:fadeUp .3s ease;position:relative}
+    .challenge-modal h3{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--rust);margin-bottom:.5rem}
+    .challenge-prompt{background:var(--parchment);border-radius:8px;padding:1rem 1.2rem;font-family:'Noto Serif Devanagari',serif;font-size:1rem;line-height:1.7;color:var(--ink);margin:1rem 0;border-left:3px solid var(--saffron)}
+    .challenge-timer{font-size:.8rem;color:var(--muted);text-align:center;margin-top:.5rem}
+
+    .empty{text-align:center;padding:4rem 2rem;color:var(--muted);grid-column:1/-1}
+    .empty p{font-family:'Playfair Display',serif;font-size:1rem;font-style:italic}
+    .empty code{font-size:.8rem;background:var(--parchment);padding:.15rem .4rem;border-radius:3px;font-style:normal}
+
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--saffron-light);padding:.75rem 1.6rem;border-radius:8px;font-size:.88rem;opacity:0;pointer-events:none;transition:all .3s;z-index:999;font-family:'Lato',sans-serif;border:1px solid var(--saffron)}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    .section-label{display:flex;align-items:center;gap:1rem;max-width:1100px;margin:0 auto 1.2rem;padding:0 2rem}
+    .section-label h2{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:400;color:var(--rust);white-space:nowrap}
+    .section-line{flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent)}
+
+    footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem;font-family:'Noto Serif Devanagari',serif}
+
+    @media(max-width:600px){
+      .form-row-3{grid-template-columns:1fr}
+      .hero-stats{gap:1.5rem}
+      header{padding:0 .8rem}
+      .grid{padding:0 1rem 3rem}
+      .modal{padding:1.5rem}
+      .header-search input{width:100px}
+      .header-search input:focus{width:140px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-main">काव्य संगम</span>
+    <span class="logo-sub">Kavya Sangam v2</span>
+  </div>
+  <div class="header-right">
+    <div class="header-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search poems..." oninput="doSearch(this.value)"/>
+    </div>
+    <button class="nav-btn active" onclick="showSection('read',this)">📖 Read</button>
+    <button class="nav-btn" onclick="showSection('write',this)">✍️ Upload</button>
+    <button class="nav-btn" onclick="showSection('bookmarks',this)">🔖 Saved</button>
+    <button class="icon-btn" onclick="toggleDark()" id="darkBtn">🌙</button>
+  </div>
+</header>
+
+<!-- CHALLENGE BANNER -->
+<div class="challenge-banner" onclick="openChallenge()">
+  <span class="challenge-tag">✨ Today's Challenge</span>
+  <strong id="challengeTitle">Write about a monsoon memory</strong>
+  <span>→ Click to write</span>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Where words <em>breathe</em> in every tongue</h1>
+  <p>मराठी · हिंदी · English — एकत्र, एका व्यासपीठावर</p>
+  <div class="hero-stats">
+    <span><strong id="totalCount">0</strong>Writings</span>
+    <span><strong>3</strong>Languages</span>
+    <span><strong id="totalLikes">0</strong>❤️ Likes</span>
+  </div>
+  <!-- Database connection indicator -->
+  <div class="db-badge">
+    <div class="db-dot" id="dbDot"></div>
+    <span id="dbText">Connecting to SQLite...</span>
+  </div>
+</section>
+
+<!-- READ SECTION -->
+<section id="readSection">
+  <div class="mood-bar">
+    <button class="mood-btn active" onclick="filterMood('all',this)">All Moods</button>
+    <button class="mood-btn" onclick="filterMood('happy',this)">😊 Happy</button>
+    <button class="mood-btn" onclick="filterMood('sad',this)">😢 Sad</button>
+    <button class="mood-btn" onclick="filterMood('romantic',this)">💕 Romantic</button>
+    <button class="mood-btn" onclick="filterMood('nature',this)">🌿 Nature</button>
+    <button class="mood-btn" onclick="filterMood('spiritual',this)">🙏 Spiritual</button>
+    <button class="mood-btn" onclick="filterMood('inspirational',this)">🔥 Inspire</button>
+  </div>
+
+  <div class="section-label">
+    <h2>Latest Writings</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterLang('all',this)">All</button>
+    <button class="filter-btn" onclick="filterLang('marathi',this)">मराठी</button>
+    <button class="filter-btn" onclick="filterLang('hindi',this)">हिंदी</button>
+    <button class="filter-btn" onclick="filterLang('english',this)">English</button>
+    <button class="filter-btn" onclick="filterLang('poem',this)">🖊 Poems</button>
+    <button class="filter-btn" onclick="filterLang('story',this)">📖 Stories</button>
+  </div>
+
+  <div class="sort-row">
+    <label>Sort:</label>
+    <select onchange="sortPosts(this.value)">
+      <option value="newest">Newest First</option>
+      <option value="oldest">Oldest First</option>
+      <option value="mostliked">Most Liked</option>
+    </select>
+  </div>
+
+  <!-- Grid — shows spinner until DB responds -->
+  <div class="grid" id="grid">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p>Loading poems from database...</p>
+    </div>
+  </div>
+</section>
+
+<!-- UPLOAD SECTION -->
+<div class="upload-section" id="uploadSection">
+  <div class="form-card">
+    <h2>Share Your Writing ✦</h2>
+    <div class="form-row">
+      <label>Title / शीर्षक</label>
+      <input type="text" id="fTitle" placeholder="Your poem or story title..."/>
+    </div>
+    <div class="form-row">
+      <label>Author Name / नाव</label>
+      <input type="text" id="fAuthor" placeholder="Your name"/>
+    </div>
+    <div class="form-row-3">
+      <div>
+        <label>Language / भाषा</label>
+        <select id="fLang">
+          <option value="marathi">मराठी</option>
+          <option value="hindi">हिंदी</option>
+          <option value="english">English</option>
+        </select>
+      </div>
+      <div>
+        <label>Type / प्रकार</label>
+        <select id="fType">
+          <option value="poem">Poem / कविता</option>
+          <option value="story">Story / कथा</option>
+        </select>
+      </div>
+      <div>
+        <label>Mood / भावना</label>
+        <select id="fMood">
+          <option value="happy">😊 Happy</option>
+          <option value="sad">😢 Sad</option>
+          <option value="romantic">💕 Romantic</option>
+          <option value="nature">🌿 Nature</option>
+          <option value="spiritual">🙏 Spiritual</option>
+          <option value="inspirational">🔥 Inspirational</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Your Writing / लेखन</label>
+      <textarea id="fBody" placeholder="Write or paste your poem/story here..." oninput="updateWordCount()"></textarea>
+      <div class="word-count" id="wordCount">0 words</div>
+    </div>
+    <button class="submit-btn" onclick="submitPost()">🌸 Publish / प्रकाशित करा</button>
+  </div>
+</div>
+
+<!-- BOOKMARKS SECTION -->
+<div class="bookmarks-section" id="bookmarksSection">
+  <div class="section-label">
+    <h2>🔖 Your Saved Writings</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="grid" id="bookmarkGrid"></div>
+</div>
+
+<!-- READ MODAL -->
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal(null)">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- CHALLENGE MODAL -->
+<div class="challenge-overlay" id="challengeOverlay" onclick="closeChallengeModal(event)">
+  <div class="challenge-modal">
+    <button class="modal-close" onclick="closeChallengeModal(null)">✕</button>
+    <div style="font-size:.75rem;font-weight:700;letter-spacing:2px;color:var(--saffron);text-transform:uppercase">✨ Daily Writing Challenge</div>
+    <h3 id="cModalTitle">—</h3>
+    <div class="challenge-prompt" id="cModalPrompt"></div>
+    <div class="challenge-timer">Challenge refreshes daily. Respond using the Upload tab!</div>
+    <button class="submit-btn" style="width:100%;margin-top:1rem" onclick="useChallengePrompt()">✍️ Accept Challenge</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- FOOTER -->
+<footer>
+  <p>काव्य संगम v2 — Voice · Translate · Mood · Share · SQLite 🪔</p>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════
+   CONFIG
+   Change this if your server runs differently
+══════════════════════════════════════════ */
+const API = "http://localhost:5000";
+
+/* ══════════════════════════════════════════
+   STATIC DATA (Challenges + Translations)
+══════════════════════════════════════════ */
+const MOOD_EMOJI = { happy:'😊', sad:'😢', romantic:'💕', nature:'🌿', spiritual:'🙏', inspirational:'🔥' };
+
+const TRANSLATIONS = {
+  3: {
+    hindi:`मैंने राजाओं और पत्थरों को एक समान ढोया है,\nअगले मोड़ तक उनका भार भुला दिया।\n\nमेरे किनारों को हर बाढ़ और सूखा याद है,\nहर वो बच्चा जो बेपरवाह छपाके लगाता था।\n\nमैं यह नहीं पूछता कि मैं कहाँ जा रहा हूँ—\nमुझे बस खुले सागर की ओर खिंचाव पता है।`,
+    marathi:`मी राजांना आणि दगडांना सारखेच वाहिले आहे,\nपुढच्या वळणापर्यंत त्यांचे ओझे विसरले.\n\nमाझ्या किनाऱ्यांना प्रत्येक पूर आणि दुष्काळ आठवतो,\nप्रत्येक मुल जो बेफिकीरपणे उडी मारायचा.\n\nमी विचारत नाही की मी कुठे जातो—\nमला फक्त खुल्या समुद्राची ओढ माहित आहे.`
+  }
+};
+
+const CHALLENGES = [
+  { title:'Write about a monsoon memory', prompt:'Describe the smell of first rain, the sound of thunder, or a rainy afternoon from your childhood. Paint it with words.' },
+  { title:'A letter to your younger self', prompt:'What would you tell the 10-year-old you? Write a poem or short letter full of wisdom and love.' },
+  { title:'The last leaf on the tree', prompt:'Write from the perspective of the last leaf clinging to a bare tree in winter.' },
+  { title:'Street food and nostalgia', prompt:'A poem about vada pav, chai, or your favourite street food that brings back memories.' },
+  { title:'Silence has a voice', prompt:'Write about what silence says to you—in the early morning, or after a storm.' },
+];
+const todayChallenge = CHALLENGES[new Date().getDate() % CHALLENGES.length];
+
+/* ══════════════════════════════════════════
+   STATE — filled from database on load
+══════════════════════════════════════════ */
+let posts              = [];   // ← loaded from SQLite
+let currentSortedPosts = [];
+
+let currentLangFilter = 'all';
+let currentMoodFilter = 'all';
+let currentSearch     = '';
+let bookmarks         = new Set();
+let activeCardId      = null;
+let currentModalId    = null;
+let modalFontSize     = 1.05;
+let currentTransLang  = null;
+
+/* ══════════════════════════════════════════
+   DB STATUS INDICATOR
+══════════════════════════════════════════ */
+function dbStatus(state) {
+  const dot  = document.getElementById('dbDot');
+  const text = document.getElementById('dbText');
+  if (state === 'ok') {
+    dot.className  = 'db-dot ok';
+    text.textContent = '✅ SQLite connected';
+  } else if (state === 'err') {
+    dot.className  = 'db-dot err';
+    text.textContent = '❌ DB offline — run: node server.js';
+  } else {
+    dot.className  = 'db-dot';
+    text.textContent = 'Connecting to SQLite...';
+  }
+}
+
+/* ══════════════════════════════════════════
+   LOAD POEMS FROM DATABASE
+══════════════════════════════════════════ */
+async function loadPoems() {
+  try {
+    const res  = await fetch(API + "/api/poems");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+
+    // Map DB columns → frontend format
+    posts = data.map(row => ({
+      id:       row.id,
+      lang:     row.language  || 'english',
+      type:     row.type      || 'poem',
+      mood:     row.mood      || 'happy',
+      title:    row.title,
+      author:   row.author,
+      body:     row.content,
+      likes:    row.likes     || 0,
+      liked:    false,
+      date:     row.created_at ? row.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+      comments: []
+    }));
+
+    currentSortedPosts = [...posts];
+    renderGrid();
+    dbStatus('ok');
+
+  } catch (err) {
+    console.error("loadPoems error:", err);
+    dbStatus('err');
+    document.getElementById('grid').innerHTML = `
+      <div class="empty">
+        <p>⚠️ Cannot reach the database server.</p>
+        <p style="margin-top:.5rem;font-size:.82rem;font-style:normal">
+          In your terminal, run:<br/>
+          <code>node server.js</code><br/>
+          Then open: <code>http://localhost:5000</code><br/>
+          (Do NOT use Live Server or file:///)
+        </p>
+      </div>`;
+  }
+}
+
+/* ══════════════════════════════════════════
+   SAVE NEW POEM TO DATABASE
+══════════════════════════════════════════ */
+async function submitPost() {
+  const title    = document.getElementById('fTitle').value.trim();
+  const author   = document.getElementById('fAuthor').value.trim();
+  const language = document.getElementById('fLang').value;
+  const type     = document.getElementById('fType').value;
+  const mood     = document.getElementById('fMood').value;
+  const content  = document.getElementById('fBody').value.trim();
+
+  if (!title || !author || !content) {
+    showToast('⚠️ Please fill in all fields!');
+    return;
+  }
+
+  try {
+    const res = await fetch(API + "/api/poems", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, author, language, type, mood, content })
+    });
+
+    if (!res.ok) throw new Error("Save failed: " + res.status);
+
+    // Clear the form
+    document.getElementById('fTitle').value  = '';
+    document.getElementById('fAuthor').value = '';
+    document.getElementById('fBody').value   = '';
+    updateWordCount();
+
+    showToast('🌸 Published! / यशस्वीरित्या प्रकाशित!');
+
+    // Reload poems so the new one appears
+    await loadPoems();
+
+    // Go back to read section
+    setTimeout(() => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.nav-btn')[0].classList.add('active');
+      showSection('read', null);
+    }, 1200);
+
+  } catch (err) {
+    console.error("submitPost error:", err);
+    showToast('❌ Error saving. Is server running?');
+  }
+}
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function getLangLabel(l) { return l==='marathi'?'मराठी':l==='hindi'?'हिंदी':'English'; }
+function getVoiceLang(l) { return l==='marathi'?'mr-IN':l==='hindi'?'hi-IN':'en-IN'; }
+function readingTime(t)  {
+  const w = t ? t.split(/\s+/).length : 0;
+  return Math.max(1, Math.round(w / 120)) + ' min read';
+}
+
+function updateStats() {
+  document.getElementById('totalCount').textContent = posts.length;
+  document.getElementById('totalLikes').textContent = posts.reduce((a, p) => a + (p.likes || 0), 0);
+}
+
+/* ══════════════════════════════════════════
+   RENDER GRID
+══════════════════════════════════════════ */
+function getFiltered() {
+  return currentSortedPosts.filter(p => {
+    const lOk = currentLangFilter==='all' || p.lang===currentLangFilter || p.type===currentLangFilter;
+    const mOk = currentMoodFilter==='all' || p.mood===currentMoodFilter;
+    const sOk = !currentSearch ||
+      p.title.toLowerCase().includes(currentSearch) ||
+      p.author.toLowerCase().includes(currentSearch) ||
+      (p.body && p.body.toLowerCase().includes(currentSearch));
+    return lOk && mOk && sOk;
+  });
+}
+
+function renderGrid() {
+  const data = getFiltered();
+  updateStats();
+  const g = document.getElementById('grid');
+  if (!data.length) {
+    g.innerHTML = '<div class="empty"><p>No writings found with these filters.</p></div>';
+    return;
+  }
+  g.innerHTML = data.map((p, i) => `
+    <div class="card" style="animation-delay:${i*.05}s" onclick="openModal(${p.id})">
+      <div class="card-top">
+        <div class="card-badges">
+          <span class="card-lang">${getLangLabel(p.lang)}</span>
+          <span class="card-type">${p.type==='poem'?'कविता':'कथा'}</span>
+          <span class="mood-badge">${MOOD_EMOJI[p.mood]||''}</span>
+        </div>
+        <button class="card-play-btn ${activeCardId===p.id?'playing':''}"
+          onclick="event.stopPropagation();toggleVoiceCard(${p.id})">
+          ${activeCardId===p.id?'⏸':'▶'}
+        </button>
+      </div>
+      <h3>${p.title}</h3>
+      <div class="card-author">by ${p.author} · <span class="read-time">${readingTime(p.body)}</span></div>
+      <div class="card-excerpt">${(p.body||'').replace(/\n/g,' ')}</div>
+      <div class="card-footer">
+        <span>${p.date}</span>
+        <div class="card-actions">
+          <span class="card-bookmark ${bookmarks.has(p.id)?'saved':''}"
+            onclick="event.stopPropagation();toggleBookmark(${p.id})">
+            ${bookmarks.has(p.id)?'🔖':'🏷️'}
+          </span>
+          <span class="card-likes ${p.liked?'liked':''}"
+            onclick="event.stopPropagation();toggleLike(${p.id})">
+            ${p.liked?'♥':'♡'} ${p.likes}
+          </span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════
+   FILTERS & SORT
+══════════════════════════════════════════ */
+function filterLang(v, btn) {
+  currentLangFilter = v;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); renderGrid();
+}
+function filterMood(v, btn) {
+  currentMoodFilter = v;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); renderGrid();
+}
+function doSearch(val) { currentSearch = val.toLowerCase().trim(); renderGrid(); }
+function sortPosts(mode) {
+  if (mode==='newest')   currentSortedPosts = [...posts].sort((a,b) => b.date.localeCompare(a.date));
+  if (mode==='oldest')   currentSortedPosts = [...posts].sort((a,b) => a.date.localeCompare(b.date));
+  if (mode==='mostliked') currentSortedPosts = [...posts].sort((a,b) => b.likes - a.likes);
+  renderGrid();
+}
+
+/* ══════════════════════════════════════════
+   VOICE
+══════════════════════════════════════════ */
+function stopVoice() {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  activeCardId = null;
+}
+function toggleVoiceCard(id) {
+  if (activeCardId===id) { stopVoice(); renderGrid(); return; }
+  stopVoice();
+  const p = posts.find(x => x.id===id);
+  if (!p || !window.speechSynthesis) { showToast('⚠️ Voice not supported'); return; }
+  activeCardId = id;
+  const u = new SpeechSynthesisUtterance(p.title + '. ' + p.body);
+  u.lang = getVoiceLang(p.lang); u.rate = .85;
+  u.onend = u.onerror = () => { activeCardId = null; renderGrid(); };
+  window.speechSynthesis.speak(u);
+  renderGrid();
+}
+
+function modalVoice(id) {
+  if (!window.speechSynthesis) { showToast('⚠️ Voice not supported'); return; }
+  const p    = posts.find(x => x.id===id);
+  const btn  = document.getElementById('modalVoiceBtn');
+  const bar  = document.getElementById('voiceBar');
+  const fill = document.getElementById('voiceFill');
+  const stat = document.getElementById('voiceStatus');
+
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    btn.classList.remove('playing-btn'); btn.innerHTML = '🔊 Listen / ऐका';
+    bar.classList.remove('show'); return;
+  }
+  const text = p.title + '. ' + p.body;
+  const u    = new SpeechSynthesisUtterance(text);
+  u.lang = getVoiceLang(p.lang); u.rate = .82;
+  bar.classList.add('show'); btn.classList.add('playing-btn');
+  btn.innerHTML = '⏹ Stop'; stat.textContent = 'Playing...'; fill.style.width = '0%';
+  u.onboundary = e => { if (e.name==='word') fill.style.width = Math.min(100, e.charIndex/text.length*100)+'%'; };
+  u.onend = u.onerror = () => {
+    fill.style.width = '100%'; btn.classList.remove('playing-btn');
+    btn.innerHTML = '🔊 Listen / ऐका'; stat.textContent = 'Done ✓'; bar.classList.remove('show');
+  };
+  window.speechSynthesis.speak(u);
+}
+
+/* ══════════════════════════════════════════
+   TRANSLATION
+══════════════════════════════════════════ */
+function translateTo(id, toLang) {
+  const panel = document.getElementById('transPanel');
+  const body  = document.getElementById('transBody');
+  const note  = document.getElementById('transNote');
+  panel.classList.add('show');
+  document.querySelectorAll('.trans-lang-btn').forEach(b => b.classList.remove('active'));
+  const ab = document.getElementById('transBtn_'+toLang);
+  if (ab) ab.classList.add('active');
+  if (currentTransLang===toLang) { panel.classList.remove('show'); currentTransLang=null; return; }
+  currentTransLang = toLang;
+  const p = posts.find(x => x.id===id);
+  if (TRANSLATIONS[id]?.[toLang]) {
+    body.innerHTML = `<div class="translate-body">${TRANSLATIONS[id][toLang]}</div>`;
+    note.textContent = '✦ Human-curated translation'; return;
+  }
+  body.innerHTML = `<div class="translate-loading">⏳ Translating...</div>`; note.textContent = '';
+  setTimeout(() => {
+    const lName = toLang==='hindi'?'हिंदी':'मराठी';
+    body.innerHTML = `<div class="translate-body">[${lName} Translation Preview]\n\n${p.body}\n\n— Add Google Translate API for live translation.</div>`;
+    note.textContent = `✦ Connect a Translation API for accurate ${lName} results.`;
+  }, 800);
+}
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+function openModal(id) {
+  stopVoice();
+  const p = posts.find(x => x.id===id);
+  if (!p) return;
+  currentModalId = id; currentTransLang = null; modalFontSize = 1.05;
+
+  const commentsHTML = (p.comments||[]).map(c =>
+    `<div class="comment-item"><strong>${c.name}:</strong> ${c.text}</div>`).join('');
+
+  let transBtns = '';
+  if (p.lang!=='hindi')   transBtns += `<button class="trans-lang-btn" id="transBtn_hindi" onclick="translateTo(${id},'hindi')">→ हिंदी</button>`;
+  if (p.lang!=='marathi') transBtns += `<button class="trans-lang-btn" id="transBtn_marathi" onclick="translateTo(${id},'marathi')">→ मराठी</button>`;
+  if (p.lang!=='english') transBtns += `<button class="trans-lang-btn" id="transBtn_english" onclick="translateTo(${id},'english')">→ English</button>`;
+
+  document.getElementById('modalContent').innerHTML = `
+    <div style="margin-bottom:1rem">
+      <div class="modal-lang">${getLangLabel(p.lang)} · ${p.type==='poem'?'Poem / कविता':'Story / कथा'} · ${MOOD_EMOJI[p.mood]||''} ${p.mood}</div>
+      <div class="modal-title">${p.title}</div>
+      <div class="modal-author">by ${p.author} &nbsp;·&nbsp; ${p.date} &nbsp;·&nbsp; ${readingTime(p.body)}</div>
+    </div>
+    <hr class="modal-divider"/>
+    <div class="modal-toolbar">
+      <button class="tool-btn" id="modalVoiceBtn" onclick="modalVoice(${id})">🔊 Listen / ऐका</button>
+      <div class="font-control">
+        <span style="font-size:.75rem;color:var(--muted);margin-right:2px">Aa</span>
+        <button onclick="changeFontSize(-.1)">−</button>
+        <button onclick="changeFontSize(.1)">+</button>
+      </div>
+      <button class="tool-btn" onclick="copyText(${id})">📋 Copy</button>
+      <button class="tool-btn ${bookmarks.has(id)?'active':''}"
+        onclick="toggleBookmark(${id});this.classList.toggle('active');this.textContent=bookmarks.has(${id})?'🔖 Saved':'🏷️ Save'">
+        ${bookmarks.has(id)?'🔖 Saved':'🏷️ Save'}
+      </button>
+      <button class="tool-btn ${p.liked?'active':''}" id="modalLikeBtn" onclick="toggleLikeModal(${id})">
+        ${p.liked?'♥':'♡'} ${p.likes}
+      </button>
+    </div>
+    <div class="voice-bar" id="voiceBar">
+      <span style="font-size:.8rem">🔊</span>
+      <div class="voice-progress"><div class="voice-fill" id="voiceFill"></div></div>
+      <span class="voice-status" id="voiceStatus">Playing...</span>
+    </div>
+    <div class="modal-body" id="modalBody" style="font-size:${modalFontSize}rem">${p.body}</div>
+    <div class="translate-panel" id="transPanel">
+      <div class="translate-header">
+        <span>🌐 Translate</span>${transBtns}
+      </div>
+      <div id="transBody"></div>
+      <div class="translate-note" id="transNote"></div>
+    </div>
+    <div style="margin-top:1.2rem;border-top:1px solid var(--border);padding-top:.8rem">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.5rem">Share</div>
+      <div class="share-row">
+        <button class="share-btn" onclick="shareWA(${id})">💬 WhatsApp</button>
+        <button class="share-btn" onclick="shareTW(${id})">🐦 Twitter/X</button>
+        <button class="share-btn" onclick="copyText(${id})">🔗 Copy Text</button>
+      </div>
+    </div>
+    <div class="comments-section">
+      <h4>💬 Comments (${(p.comments||[]).length})</h4>
+      <div class="comment-input-row">
+        <input class="comment-input" id="commentName" placeholder="Your name..."/>
+        <input class="comment-input" id="commentText" placeholder="Your thoughts..." style="flex:2"/>
+        <button class="comment-send" onclick="addComment(${id})">Send</button>
+      </div>
+      <div class="comment-list" id="commentList">${commentsHTML}</div>
+    </div>`;
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('overlay')) return;
+  stopVoice(); window.speechSynthesis && window.speechSynthesis.cancel();
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentModalId = null; currentTransLang = null;
+  renderGrid();
+}
+
+function changeFontSize(d) {
+  modalFontSize = Math.max(.8, Math.min(1.6, modalFontSize + d));
+  const el = document.getElementById('modalBody');
+  if (el) el.style.fontSize = modalFontSize + 'rem';
+}
+
+/* ══════════════════════════════════════════
+   LIKE / BOOKMARK / COMMENT / SHARE
+══════════════════════════════════════════ */
+function toggleLike(id) {
+  const p = posts.find(x => x.id===id); if (!p) return;
+  p.liked = !p.liked; p.likes += p.liked ? 1 : -1;
+  renderGrid(); updateStats();
+}
+function toggleLikeModal(id) {
+  toggleLike(id);
+  const p = posts.find(x => x.id===id);
+  const btn = document.getElementById('modalLikeBtn');
+  if (btn) { btn.innerHTML = `${p.liked?'♥':'♡'} ${p.likes}`; p.liked ? btn.classList.add('active') : btn.classList.remove('active'); }
+}
+function toggleBookmark(id) {
+  if (bookmarks.has(id)) bookmarks.delete(id);
+  else { bookmarks.add(id); showToast('🔖 Saved to bookmarks!'); }
+  renderGrid(); renderBookmarks();
+}
+function renderBookmarks() {
+  const g    = document.getElementById('bookmarkGrid');
+  const saved = posts.filter(p => bookmarks.has(p.id));
+  if (!saved.length) { g.innerHTML = '<div class="empty"><p>No saved writings yet. Click 🏷️ on any card to save.</p></div>'; return; }
+  g.innerHTML = saved.map((p, i) => `
+    <div class="card" style="animation-delay:${i*.05}s" onclick="openModal(${p.id})">
+      <div class="card-top">
+        <div class="card-badges">
+          <span class="card-lang">${getLangLabel(p.lang)}</span>
+          <span class="card-type">${p.type==='poem'?'कविता':'कथा'}</span>
+          <span class="mood-badge">${MOOD_EMOJI[p.mood]||''}</span>
+        </div>
+      </div>
+      <h3>${p.title}</h3>
+      <div class="card-author">by ${p.author}</div>
+      <div class="card-excerpt">${(p.body||'').replace(/\n/g,' ')}</div>
+      <div class="card-footer">
+        <span>${p.date}</span>
+        <span class="card-likes ${p.liked?'liked':''}" onclick="event.stopPropagation();toggleLike(${p.id})">${p.liked?'♥':'♡'} ${p.likes}</span>
+      </div>
+    </div>`).join('');
+}
+
+function addComment(id) {
+  const name = document.getElementById('commentName').value.trim();
+  const text = document.getElementById('commentText').value.trim();
+  if (!name||!text) { showToast('⚠️ Enter your name and comment'); return; }
+  const p = posts.find(x => x.id===id); if (!p) return;
+  if (!p.comments) p.comments = [];
+  p.comments.push({name, text});
+  document.getElementById('commentName').value = '';
+  document.getElementById('commentText').value = '';
+  document.getElementById('commentList').innerHTML = p.comments.map(c =>
+    `<div class="comment-item"><strong>${c.name}:</strong> ${c.text}</div>`).join('');
+  showToast('💬 Comment added!');
+}
+function copyText(id) {
+  const p = posts.find(x => x.id===id); if (!p) return;
+  navigator.clipboard.writeText(`${p.title}\nby ${p.author}\n\n${p.body}\n\n— काव्य संगम`).then(() => showToast('📋 Copied!'));
+}
+function shareWA(id) {
+  const p = posts.find(x => x.id===id);
+  window.open('https://wa.me/?text=' + encodeURIComponent(`*${p.title}*\nby ${p.author}\n\n${p.body.substring(0,200)}...\n\n— काव्य संगम`), '_blank');
+}
+function shareTW(id) {
+  const p = posts.find(x => x.id===id);
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(`"${p.title}" by ${p.author}\n\n${p.body.substring(0,180)}...\n\n#KavyaSangam #Poetry`), '_blank');
+}
+
+/* ══════════════════════════════════════════
+   WORD COUNT
+══════════════════════════════════════════ */
+function updateWordCount() {
+  const t = document.getElementById('fBody').value.trim();
+  const w = t ? t.split(/\s+/).length : 0;
+  document.getElementById('wordCount').textContent = w + ' words · ~' + Math.max(1, Math.round(w/120)) + ' min read';
+}
+
+/* ══════════════════════════════════════════
+   SECTION NAV
+══════════════════════════════════════════ */
+function showSection(sec, btn) {
+  if (btn) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+  document.getElementById('readSection').style.display = sec==='read' ? 'block' : 'none';
+  document.getElementById('uploadSection').classList.toggle('open', sec==='write');
+  document.getElementById('bookmarksSection').classList.toggle('open', sec==='bookmarks');
+  if (sec==='bookmarks') renderBookmarks();
+}
+
+/* ══════════════════════════════════════════
+   CHALLENGE
+══════════════════════════════════════════ */
+function openChallenge() {
+  document.getElementById('challengeTitle').textContent = todayChallenge.title;
+  document.getElementById('cModalTitle').textContent    = todayChallenge.title;
+  document.getElementById('cModalPrompt').textContent   = todayChallenge.prompt;
+  document.getElementById('challengeOverlay').classList.add('open');
+}
+function closeChallengeModal(e) {
+  if (e && e.target !== document.getElementById('challengeOverlay')) return;
+  document.getElementById('challengeOverlay').classList.remove('open');
+}
+function useChallengePrompt() {
+  document.getElementById('challengeOverlay').classList.remove('open');
+  document.getElementById('fBody').value = '// Challenge: ' + todayChallenge.title + '\n\n';
+  updateWordCount();
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  showSection('write', null);
+  showToast('✨ Challenge accepted! Start writing...');
+}
+
+/* ══════════════════════════════════════════
+   DARK MODE
+══════════════════════════════════════════ */
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  document.getElementById('darkBtn').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+}
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+document.getElementById('challengeTitle').textContent = todayChallenge.title;
+
+window.onload = function () {
+  loadPoems();   // ← fetch from SQLite on page load
+};
+</script>
+</body>
+</html>
