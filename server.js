@@ -4,20 +4,20 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
 const app = express();
-const PORT = 5000;
+
+// IMPORTANT: Use Render's dynamic port
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-// Serve your HTML file
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "kavya-sangam.html"));
-});
+// Serve all static files (index.html, css, js)
+app.use(express.static(__dirname));
 
 // Create database
 const db = new sqlite3.Database("./kavya_sangam.db");
 
-// Create table
+// Create table if not exists
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS poems (
@@ -37,7 +37,10 @@ db.serialize(() => {
 // GET poems
 app.get("/api/poems", (req, res) => {
   db.all("SELECT * FROM poems ORDER BY id DESC", [], (err, rows) => {
-    if (err) return res.status(500).json(err);
+    if (err) {
+      console.error(err);
+      return res.status(500).json(err);
+    }
     res.json(rows);
   });
 });
@@ -52,11 +55,15 @@ app.post("/api/poems", (req, res) => {
   `;
 
   db.run(sql, [title, author, language, type, mood, content], function (err) {
-    if (err) return res.status(500).json(err);
+    if (err) {
+      console.error(err);
+      return res.status(500).json(err);
+    }
     res.json({ message: "Poem saved successfully" });
   });
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log("Server running on port " + PORT);
 });
