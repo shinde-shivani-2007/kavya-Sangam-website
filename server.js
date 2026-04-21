@@ -1,69 +1,108 @@
+// Load .env first (VERY IMPORTANT)
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
-const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
 const app = express();
-
-// IMPORTANT: Use Render's dynamic port
 const PORT = process.env.PORT || 5000;
 
+/* =========================
+   SUPABASE SETUP
+========================= */
+const { createClient } = require("@supabase/supabase-js");
+
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+  console.error("❌ Missing Supabase ENV variables!");
+  process.exit(1);
+}
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
+/* =========================
+   MIDDLEWARE
+========================= */
 app.use(cors());
 app.use(express.json());
-
-// Serve all static files (index.html, css, js)
 app.use(express.static(__dirname));
 
-// Create database
-const db = new sqlite3.Database("./kavya_sangam.db");
-
-// Create table if not exists
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS poems (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      author TEXT NOT NULL,
-      language TEXT,
-      type TEXT,
-      mood TEXT,
-      content TEXT NOT NULL,
-      likes INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+/* =========================
+   HEALTH CHECK (optional)
+========================= */
+app.get("/", (req, res) => {
+  res.send("🚀 Server running with Supabase");
 });
 
-// GET poems
-app.get("/api/poems", (req, res) => {
-  db.all("SELECT * FROM poems ORDER BY id DESC", [], (err, rows) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json(err);
+/* =========================
+   GET ALL POEMS
+========================= */
+app.get("/api/poems", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("poems")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.error("Supabase GET error:", error);
+      return res.status(500).json({ error: error.message });
     }
-    res.json(rows);
-  });
+
+    res.json(data);
+  } catch (err) {
+    console.error("GET ERROR:", err.message);
+    res.status(500).json({ error: "Failed to fetch poems" });
+  }
 });
 
-// POST poem
-app.post("/api/poems", (req, res) => {
-  const { title, author, language, type, mood, content } = req.body;
+/* =========================
+   ADD NEW POEM
+========================= */
+app.post("/api/poems", async (req, res) => {
+  try {
+    const { title, author, language, type, mood, content } = req.body;
 
-  const sql = `
-    INSERT INTO poems (title, author, language, type, mood, content)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `;
-
-  db.run(sql, [title, author, language, type, mood, content], function (err) {
-    if (err) {
-      console.error(err);
-      return res.status(500).json(err);
+    // Validation
+    if (!title || !author || !content) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
-    res.json({ message: "Poem saved successfully" });
-  });
+
+    const { data, error } = await supabase
+      .from("poems")
+      .insert([
+        {
+          title,
+          author,
+          language,
+          type,
+          mood,
+          content,
+        },
+      ])
+      .select(); // returns inserted row
+
+    if (error) {
+      console.error("Supabase POST error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      message: "✅ Poem saved successfully",
+      data,
+    });
+  } catch (err) {
+    console.error("POST ERROR:", err.message);
+    res.status(500).json({ error: "Failed to save poem" });
+  }
 });
 
-// Start server
+/* =========================
+   START SERVER
+========================= */
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
