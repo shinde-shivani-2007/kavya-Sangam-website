@@ -1,108 +1,132 @@
-// Load .env first (VERY IMPORTANT)
+
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const admin = require("firebase-admin");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-/* =========================
-   SUPABASE SETUP
-========================= */
-const { createClient } = require("@supabase/supabase-js");
+// Firebase connection
+const serviceAccount = require("./serviceAccountKey.json");
 
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
-  console.error("❌ Missing Supabase ENV variables!");
-  process.exit(1);
-}
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
-
-/* =========================
-   MIDDLEWARE
-========================= */
-app.use(cors());
-app.use(express.json());
-app.use(express.static(__dirname));
-
-/* =========================
-   HEALTH CHECK (optional)
-========================= */
-app.get("/", (req, res) => {
-  res.send("🚀 Server running with Supabase");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
 });
 
-/* =========================
-   GET ALL POEMS
-========================= */
+const db = admin.firestore();
+const poemsCollection = db.collection("poems");
+
+app.use(cors());
+app.use(express.json());
+
+// Serve frontend files from public/ if you use that folder.
+// Otherwise, keep your existing frontend setup.
+const publicFolder = path.join(__dirname, "public");
+
+if (fs.existsSync(publicFolder)) {
+  app.use(express.static(publicFolder));
+}
+
+// Home route
+app.get("/", (req, res) => {
+  const indexFile = path.join(__dirname, "public", "index.html");
+
+  if (fs.existsSync(indexFile)) {
+    return res.sendFile(indexFile);
+  }
+
+  res.send("Kavya Sangam Firebase server is running!");
+});
+
+// Format a poem for the existing frontend
+function formatPoem(doc) {
+  const data = doc.data();
+  const createdAt = data.createdAt;
+
+  let date = data.date || "";
+
+  if (createdAt && typeof createdAt.toDate === "function") {
+    date = createdAt.toDate().toLocaleDateString("en-IN");
+  }
+
+  return {
+    ...data,
+    id: data.id ?? doc.id,
+    docId: doc.id,
+    lang: data.language || "Marathi",
+    body: data.content || "",
+    date,
+    likes: data.likes || 0,
+    comments: data.comments || [],
+  };
+}
+
+// GET: fetch all poems
 app.get("/api/poems", async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from("poems")
-      .select("*")
-      .order("id", { ascending: false });
+    const snapshot = await poemsCollection
+      .orderBy("createdAt", "desc")
+      .get();
 
-    if (error) {
-      console.error("Supabase GET error:", error);
-      return res.status(500).json({ error: error.message });
-    }
-
-    res.json(data);
-  } catch (err) {
-    console.error("GET ERROR:", err.message);
-    res.status(500).json({ error: "Failed to fetch poems" });
+    res.json(snapshot.docs.map(formatPoem));
+  } catch (error) {
+    console.error("Fetch poems error:", error);
+    res.status(500).json({
+      message: "Failed to fetch poems",
+    });
   }
 });
 
-/* =========================
-   ADD NEW POEM
-========================= */
+// POST: save a new poem
 app.post("/api/poems", async (req, res) => {
   try {
     const { title, author, language, type, mood, content } = req.body;
 
-    // Validation
-    if (!title || !author || !content) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (
+      typeof title !== "string" ||
+      !title.trim() ||
+      typeof author !== "string" ||
+      !author.trim() ||
+      typeof content !== "string" ||
+      !content.trim()
+    ) {
+      return res.status(400).json({
+        message: "Title, author and content are required",
+      });
     }
 
-    const { data, error } = await supabase
-      .from("poems")
-      .insert([
-        {
-          title,
-          author,
-          language,
-          type,
-          mood,
-          content,
-        },
-      ])
-      .select(); // returns inserted row
+    const poem = {
+      id: Date.now(),
+      title: title.trim(),
+      author: author.trim(),
+      language: language || "Marathi",
+      type: type || "Poem",
+      mood: mood || "Thoughtful",
+      content: content.trim(),
+      likes: 0,
+      comments: [],
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
 
-    if (error) {
-      console.error("Supabase POST error:", error);
-      return res.status(500).json({ error: error.message });
-    }
+    const docRef = await poemsCollection.add(poem);
+    const savedDoc = await docRef.get();
 
-    res.json({
-      message: "✅ Poem saved successfully",
-      data,
+    res.status(201).json(formatPoem(savedDoc));
+  } catch (error) {
+    console.error("Save poem error:", error);
+    res.status(500).json({
+      message: "Failed to save poem",
     });
-  } catch (err) {
-    console.error("POST ERROR:", err.message);
-    res.status(500).json({ error: "Failed to save poem" });
   }
 });
 
-/* =========================
-   START SERVER
-========================= */
+// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
+  console.log(
+    `Kavya Sangam server running at http://localhost:${PORT}`
+  );
 });

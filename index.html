@@ -450,7 +450,7 @@
    CONFIG
    Change this if your server runs differently
 ══════════════════════════════════════════ */
-const API = "https://kavya-sangam-website-4.onrender.com";
+const API = "http://localhost:5000";
 /* ══════════════════════════════════════════
    STATIC DATA (Challenges + Translations)
 ══════════════════════════════════════════ */
@@ -495,13 +495,13 @@ function dbStatus(state) {
   const text = document.getElementById('dbText');
   if (state === 'ok') {
     dot.className  = 'db-dot ok';
-    text.textContent = '✅ SQLite connected';
+    text.textContent = '✅ firebase connected';
   } else if (state === 'err') {
     dot.className  = 'db-dot err';
     text.textContent = '❌ DB offline — run: node server.js';
   } else {
     dot.className  = 'db-dot';
-    text.textContent = 'Connecting to SQLite...';
+    text.textContent = 'Connecting to firebase...';
   }
 }
 
@@ -516,18 +516,18 @@ async function loadPoems() {
 
     // Map DB columns → frontend format
     posts = data.map(row => ({
-      id:       row.id,
-      lang:     row.language  || 'english',
-      type:     row.type      || 'poem',
-      mood:     row.mood      || 'happy',
-      title:    row.title,
-      author:   row.author,
-      body:     row.content,
-      likes:    row.likes     || 0,
-      liked:    false,
-      date:     row.created_at ? row.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
-      comments: []
-    }));
+  id: row.id,
+  lang: (row.lang || row.language || "english").toLowerCase(),
+  type: (row.type || "poem").toLowerCase(),
+  mood: (row.mood || "happy").toLowerCase(),
+  title: row.title || "",
+  author: row.author || "",
+  body: row.body || row.content || "",
+  likes: row.likes || 0,
+  liked: false,
+  date: row.date || row.created_at || "",
+  comments: row.comments || []
+}));
 
     currentSortedPosts = [...posts];
     renderGrid();
