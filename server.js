@@ -34,21 +34,14 @@ app.use(cors());
 app.use(express.json());
 
 // Serve frontend files if the public folder exists
-const publicFolder = path.join(__dirname, "public");
 
-if (fs.existsSync(publicFolder)) {
-  app.use(express.static(publicFolder));
-}
+app.use(express.static(__dirname));
+
 
 // Home route
+// Home route
 app.get("/", (req, res) => {
-  const indexFile = path.join(publicFolder, "index.html");
-
-  if (fs.existsSync(indexFile)) {
-    return res.sendFile(indexFile);
-  }
-
-  res.send("Kavya Sangam Firebase server is running!");
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // Format a poem for the frontend
