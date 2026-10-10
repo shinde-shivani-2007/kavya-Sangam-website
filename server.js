@@ -12,7 +12,6 @@ const PORT = process.env.PORT || 5000;
 
 // Firebase connection
 
-const path = require("path");
 
 const secretFile = "/etc/secrets/serviceAccountKey.json";
 
