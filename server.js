@@ -10,16 +10,18 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Firebase connection
-
-
+// Firebase credentials: Render Secret File
 const secretFile = "/etc/secrets/serviceAccountKey.json";
 
-const keyPath = fs.existsSync(secretFile)
-  ? secretFile
-  : path.join(__dirname, "serviceAccountKey.json");
+if (!fs.existsSync(secretFile)) {
+  throw new Error(
+    "Firebase Secret File not found. Add serviceAccountKey.json in Render > Environment > Secret Files."
+  );
+}
 
-const serviceAccount = require(keyPath);
+const serviceAccount = JSON.parse(
+  fs.readFileSync(secretFile, "utf8")
+);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -31,8 +33,7 @@ const poemsCollection = db.collection("poems");
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend files from public/ if you use that folder.
-// Otherwise, keep your existing frontend setup.
+// Serve frontend files if the public folder exists
 const publicFolder = path.join(__dirname, "public");
 
 if (fs.existsSync(publicFolder)) {
@@ -41,7 +42,7 @@ if (fs.existsSync(publicFolder)) {
 
 // Home route
 app.get("/", (req, res) => {
-  const indexFile = path.join(__dirname, "public", "index.html");
+  const indexFile = path.join(publicFolder, "index.html");
 
   if (fs.existsSync(indexFile)) {
     return res.sendFile(indexFile);
@@ -50,7 +51,7 @@ app.get("/", (req, res) => {
   res.send("Kavya Sangam Firebase server is running!");
 });
 
-// Format a poem for the existing frontend
+// Format a poem for the frontend
 function formatPoem(doc) {
   const data = doc.data();
   const createdAt = data.createdAt;
@@ -82,7 +83,7 @@ app.get("/api/poems", async (req, res) => {
 
     res.json(snapshot.docs.map(formatPoem));
   } catch (error) {
-    console.error("Fetch poems error:", error);
+    console.error("Fetch poems error:", error.message);
     res.status(500).json({
       message: "Failed to fetch poems",
     });
@@ -125,7 +126,7 @@ app.post("/api/poems", async (req, res) => {
 
     res.status(201).json(formatPoem(savedDoc));
   } catch (error) {
-    console.error("Save poem error:", error);
+    console.error("Save poem error:", error.message);
     res.status(500).json({
       message: "Failed to save poem",
     });
@@ -134,7 +135,5 @@ app.post("/api/poems", async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(
-    `Kavya Sangam server running at http://localhost:${PORT}`
-  );
+  console.log(`Kavya Sangam server running on port ${PORT}`);
 });
