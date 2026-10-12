@@ -450,7 +450,7 @@
    CONFIG
    Change this if your server runs differently
 ══════════════════════════════════════════ */
-const API = "http://localhost:5000";
+const API_URL = "https://kavya-sangam-website-5.onrender.com";
 /* ══════════════════════════════════════════
    STATIC DATA (Challenges + Translations)
 ══════════════════════════════════════════ */
@@ -490,64 +490,84 @@ let currentTransLang  = null;
 /* ══════════════════════════════════════════
    DB STATUS INDICATOR
 ══════════════════════════════════════════ */
+
 function dbStatus(state) {
-  const dot  = document.getElementById('dbDot');
-  const text = document.getElementById('dbText');
-  if (state === 'ok') {
-    dot.className  = 'db-dot ok';
-    text.textContent = '✅ firebase connected';
-  } else if (state === 'err') {
-    dot.className  = 'db-dot err';
-    text.textContent = '❌ DB offline — run: node server.js';
+  const dot = document.getElementById("dbDot");
+  const text = document.getElementById("dbText");
+
+  if (!dot || !text) return;
+
+  if (state === "ok") {
+    dot.className = "db-dot ok";
+    text.textContent = "✅ Firebase connected";
+  } else if (state === "err") {
+    dot.className = "db-dot err";
+    text.textContent = "❌ Database connection failed";
   } else {
-    dot.className  = 'db-dot';
-    text.textContent = 'Connecting to firebase...';
+    dot.className = "db-dot";
+    text.textContent = "Connecting to Firebase...";
   }
 }
+
 
 /* ══════════════════════════════════════════
    LOAD POEMS FROM DATABASE
 ══════════════════════════════════════════ */
-async function loadPoems() {
-  try {
-    const res  = await fetch(API + "/api/poems");
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
 
-    // Map DB columns → frontend format
+async function loadPoems() {
+  const grid = document.getElementById("grid");
+
+  try {
+    dbStatus("loading");
+
+    const response = await fetch(
+      API_URL + "/api/poems",
+      { method: "GET", cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      throw new Error("Invalid poems data");
+    }
+
     posts = data.map(row => ({
-  id: row.id,
-  lang: (row.lang || row.language || "english").toLowerCase(),
-  type: (row.type || "poem").toLowerCase(),
-  mood: (row.mood || "happy").toLowerCase(),
-  title: row.title || "",
-  author: row.author || "",
-  body: row.body || row.content || "",
-  likes: row.likes || 0,
-  liked: false,
-  date: row.date || row.created_at || "",
-  comments: row.comments || []
-}));
+      id: row.id ?? row.docId,
+      lang: (row.lang || row.language || "english").toLowerCase(),
+      type: (row.type || "poem").toLowerCase(),
+      mood: (row.mood || "happy").toLowerCase(),
+      title: row.title || "",
+      author: row.author || "",
+      body: row.body || row.content || "",
+      likes: row.likes || 0,
+      liked: false,
+      date: row.date || "",
+      comments: row.comments || []
+    }));
 
     currentSortedPosts = [...posts];
     renderGrid();
-    dbStatus('ok');
+    dbStatus("ok");
 
-  } catch (err) {
-    console.error("loadPoems error:", err);
-    dbStatus('err');
-    document.getElementById('grid').innerHTML = `
+  } catch (error) {
+    console.error("Firebase fetch error:", error);
+
+    dbStatus("err");
+
+    grid.innerHTML = `
       <div class="empty">
-        <p>⚠️ Cannot reach the database server.</p>
-        <p style="margin-top:.5rem;font-size:.82rem;font-style:normal">
-          In your terminal, run:<br/>
-          <code>node server.js</code><br/>
-          Then open: <code>http://localhost:5000</code><br/>
-          (Do NOT use Live Server or file:///)
-        </p>
-      </div>`;
+        <p>Unable to load poems.</p>
+        <p>${error.message}</p>
+        <button onclick="loadPoems()">Retry</button>
+      </div>
+    `;
   }
 }
+
 
 /* ══════════════════════════════════════════
    SAVE NEW POEM TO DATABASE
@@ -566,7 +586,7 @@ async function submitPost() {
   }
 
   try {
-    const res = await fetch(API + "/api/poems", {
+    const res = await fetch(API_URL + "/api/poems", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, author, language, type, mood, content })
